@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Etiquetas de ropa con OCR</title>
+<style>
+:root{--bg:#eceff1;--pn:#fff;--ink:#14181c;--ink2:#5d676f;--ln:#d5dbe0;--ac:#0b6e68;--acx:#fff}
+@media(prefers-color-scheme:dark){:root{--bg:#12161a;--pn:#1b2025;--ink:#eef1f3;--ink2:#9aa5ad;--ln:#2c343b;--ac:#3fb8ae;--acx:#06201e}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+main{max-width:1180px;margin:0 auto;padding:16px;display:grid;gap:16px;grid-template-columns:minmax(0,380px) minmax(0,1fr);align-items:start}
+@media(max-width:820px){main{grid-template-columns:1fr}}
+h1{font-size:22px;margin:0 0 2px;letter-spacing:-.02em}h2{font-size:15px;margin:0 0 8px}
+.sub,.hint{color:var(--ink2);font-size:13px;margin:4px 0 0}.hint{font-size:12px}
+.pn{background:var(--pn);border:1px solid var(--ln);border-radius:10px;padding:14px;margin-top:12px}
+label{display:block;font-size:12px;font-weight:600;color:var(--ink2);margin:10px 0 4px}
+textarea,input[type=text],select{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--ln);border-radius:8px;padding:9px 10px}
+textarea{min-height:190px;font:13px/1.5 ui-monospace,Menlo,monospace;resize:vertical}
+:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.r{display:flex;gap:8px}.r>*{flex:1}
+.ck{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:400;color:var(--ink);margin:8px 0 0}
+.ck input{width:18px;height:18px;accent-color:var(--ac)}
+button{font:inherit;font-weight:600;border-radius:8px;border:1px solid var(--ln);background:var(--pn);color:var(--ink);padding:11px 12px;min-height:44px;cursor:pointer}
+button.p{background:var(--ac);color:var(--acx);border-color:var(--ac)}button:disabled{opacity:.5}
+#th{max-width:100%;max-height:150px;border-radius:6px;margin-top:8px;display:none}
+#g{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+#g canvas{width:100%;height:auto;background:#fff;border:1px solid var(--ln);border-radius:4px}
+.bar{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+details{margin-top:10px}summary{cursor:pointer;font-size:13px;color:var(--ink2)}
+</style></head><body>
+<main>
+<section>
+<h1>Etiquetas de ropa con OCR</h1>
+<p class="sub">Sube la captura del proveedor, corrige la lista y manda las etiquetas a imprimir.</p>
+<div class="pn"><h2>1. Captura de WhatsApp</h2>
+<input type="file" id="f" accept="image/*">
+<img id="th" alt="Captura cargada">
+<div class="r" style="margin-top:8px"><button class="p" id="ocr" disabled>Leer con OCR</button></div>
+<p class="hint" id="msg">Elige una imagen para empezar. También puedes escribir la lista a mano abajo.</p>
+<details><summary>Texto leído por el OCR</summary><textarea id="raw" spellcheck="false" style="min-height:110px"></textarea>
+<button id="re" style="margin-top:6px">Convertir de nuevo</button></details>
+</div>
+<div class="pn"><h2>2. Lista de prendas</h2>
+<textarea id="t" spellcheck="false"></textarea>
+<p class="hint">Formato: <b>cantidad nombre $precio | talla | color</b>. Talla y color son opcionales.</p>
+<div class="r"><div><label for="sz">Rollo (mm)</label><select id="sz"></select></div>
+<div><label for="dpi">Resolución</label><select id="dpi"><option value="203">203 dpi</option><option value="300">300 dpi</option></select></div></div>
+<label for="st">Nombre de tu tienda (opcional)</label>
+<input type="text" id="st" placeholder="Ej. Aida Boutique">
+<label class="ck"><input type="checkbox" id="bc"> Código de barras escaneable</label>
+<label class="ck"><input type="checkbox" id="bd"> Borde alrededor</label>
+</div>
+<div class="pn"><h2>3. Imprimir</h2>
+<div class="r"><button class="p" id="sh">Enviar a Print Master</button><button id="dl">Descargar tira</button></div>
+<p class="hint" id="msg2"></p>
+</div>
+</section>
+<section class="pn" style="margin-top:0"><div class="bar"><strong id="n"></strong><span class="sub" id="px"></span></div><div id="g"></div></section>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const P="212222 222122 222221 121223 121322 131222 122213 122312 132212 221213 221312 231212 112232 122132 122231 113222 123122 123221 223211 221132 221231 213212 223112 312131 311222 321122 321221 312212 322112 322211 212123 212321 232121 111323 131123 131321 112313 132113 132311 211313 231113 231311 112133 112331 132131 113123 113321 133121 313121 211331 231131 213113 213311 213131 311123 311321 331121 312113 312311 332111 314111 221411 431111 111224 111422 121124 121421 141122 141221 112214 112412 122114 122411 142112 142211 241211 221114 413111 241112 134111 111242 121142 121241 114212 124112 124211 411212 421112 421211 212141 214121 412121 111143 111341 131141 114113 114311 411113 411311 113141 114131 311141 411131 211412 211214 211232 2331112".split(" ");
+const SZ=["20x10","20x20","30x20","40x30","40x40","40x80","50x30","50x50","50x60","50x80"];
+const S={t:"",sz:"40x30",dpi:"203",st:"",bc:1,bd:0};
+try{Object.assign(S,JSON.parse(localStorage.getItem("etq2")||"{}"))}catch(e){}
+SZ.forEach(v=>$("#sz").add(new Option(v,v)));
+const ids=["t","sz","dpi","st"];
+ids.forEach(k=>$("#"+k).value=S[k]);["bc","bd"].forEach(k=>$("#"+k).checked=!!S[k]);
+
+/* ---------- OCR ---------- */
+let F=null;
+$("#f").onchange=e=>{F=e.target.files[0]||null;$("#ocr").disabled=!F;if(F){$("#th").src=URL.createObjectURL(F);$("#th").style.display="block";$("#msg").textContent="Listo. Pulsa “Leer con OCR”."}};
+const loadOcr=()=>new Promise((ok,no)=>{if(window.Tesseract)return ok();const s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js";s.onload=ok;s.onerror=()=>no(Error("no se pudo descargar el motor"));document.head.appendChild(s)});
+async function prep(file){ // agranda, pasa a grises, invierte si es modo oscuro y sube contraste
+ const im=await createImageBitmap(file),k=Math.max(1,1800/im.width),c=document.createElement("canvas");
+ c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
+ const x=c.getContext("2d");x.drawImage(im,0,0,c.width,c.height);
+ const d=x.getImageData(0,0,c.width,c.height),a=d.data;let sum=0;
+ for(let i=0;i<a.length;i+=4){const g=.3*a[i]+.59*a[i+1]+.11*a[i+2];a[i]=g;sum+=g}
+ const inv=sum/(a.length/4)<110;
+ for(let i=0;i<a.length;i+=4){let g=inv?255-a[i]:a[i];g=Math.max(0,Math.min(255,(g-110)*1.5+150));a[i]=a[i+1]=a[i+2]=g}
+ x.putImageData(d,0,0);return c}
+function ocr2list(txt){
+ const out=[],bad=[];
+ txt.split(/\r?\n/).forEach(raw=>{
+  let s=raw.replace(/[✓✔]+/g," ").replace(/\b\d{1,2}:\d{2}\s*(?:[ap]\.?\s?m\.?)?/gi," ").replace(/[|•_]+/g," ").replace(/\s+/g," ").trim(),m;
+  if(s.length<4||/^(hola|buen|gracias|disponible|enviado|visto|entregado|ayer|hoy)/i.test(s)||/\b\d{3}[- ]?\d{3}[- ]?\d{4}\b/.test(s))return;
+  let q=1,p=null,t="";
+  if(m=s.match(/^(\d{1,3})\s*(?:x|pzas?|pz|piezas?)?\s+(?=[A-Za-zÁ-ú])/i)){q=+m[1];s=s.slice(m[0].length)}
+  if(m=s.match(/\$\s*(\d[\d,]*(?:\.\d{1,2})?)/)){p=m[1];s=s.replace(m[0]," ")}
+  else{const a=[...s.matchAll(/(?<![\w.])(\d{2,5})(?!\w)/g)].pop();if(a){p=a[1];s=s.slice(0,a.index)+" "+s.slice(a.index+a[0].length)}}
+  p=p&&p.replace(/,/g,"");
+  if(!p||+p<20){bad.push(raw.trim());return}
+  if(m=[...s.matchAll(/(?<!\S)(?:talla|t)\.?\s*(\d{1,2})(?!\S)|(?<!\S)(XXXL|XXL|XL|XS|S|M|L|U|UNI)(?!\S)/gi)].pop()){t=(m[1]||m[2]).toUpperCase();s=s.slice(0,m.index)+" "+s.slice(m.index+m[0].length)}
+  s=s.replace(/^[\s\-:]+|[\s\-:]+$/g,"").replace(/\s+/g," ");
+  if(s.length<2){bad.push(raw.trim());return}
+  out.push(q+" "+s+" $"+p+(t?" | "+t:""))});
+ return{out,bad}}
+function conv(){const{out,bad}=ocr2list($("#raw").value);
+ if(out.length){S.t=$("#t").value=out.join("\n");render()}
+ $("#msg").textContent=out.length?out.length+" líneas leídas. Revísalas abajo."+(bad.length?" Sin precio válido: "+bad.slice(0,3).join(" · ")+(bad.length>3?"…":""):""):"No encontré precios. Revisa el texto del OCR o escribe la lista a mano."}
+$("#re").onclick=conv;
+$("#ocr").onclick=async()=>{const m=$("#msg"),b=$("#ocr");b.disabled=true;
+ try{m.textContent="Preparando imagen…";const c=await prep(F);
+  m.textContent="Cargando motor OCR (la primera vez tarda)…";await loadOcr();
+  const w=await Tesseract.createWorker("spa+eng",1,{logger:e=>{if(e.status==="recognizing text")m.textContent="Leyendo… "+Math.round(e.progress*100)+"%"}});
+  await w.setParameters({tessedit_pageseg_mode:"6"});
+  const{data}=await w.recognize(c);await w.terminate();
+  $("#raw").value=data.text;conv()
+ }catch(e){m.textContent="No se pudo leer la imagen ("+(e.message||e)+"). El motor OCR se descarga de internet la primera vez."}
+ b.disabled=false};
+
+/* ---------- Etiquetas ---------- */
+function parse(t){const o=[];t.split(/\r?\n/).forEach(l=>{
+ const m=l.match(/^\s*(\d+)\s+(.+?)\s+\$?\s*([\d,]+(?:\.\d+)?)\s*(?:\|\s*([^|]*?))?\s*(?:\|\s*(.*?))?\s*$/);if(!m)return;
+ const n=+m[1],p=parseFloat(m[3].replace(/,/g,""));if(!n||isNaN(p))return;
+ const nm=m[2].trim().replace(/\s+/g," "),name=nm[0].toUpperCase()+nm.slice(1);
+ for(let i=0;i<n;i++)o.push({name,p,t:(m[4]||"").trim(),c:(m[5]||"").trim()})});return o}
+const sku=l=>(l.name.normalize("NFD").replace(/[\u0300-\u036f]/g,"").split(" ").map(w=>w[0]).join("").slice(0,3).toUpperCase().replace(/[^A-Z0-9]/g,"")||"X")+Math.round(l.p);
+const money=p=>"$"+(Number.isInteger(p)?p:p.toFixed(2)).toLocaleString("es-MX");
+function wrap(x,s,mw){const w=s.split(" "),o=[];let c=w[0]||"";for(let i=1;i<w.length;i++){const n=c+" "+w[i];if(x.measureText(n).width<=mw)c=n;else{o.push(c);c=w[i]}}o.push(c);return o}
+const dims=()=>{const[a,b]=S.sz.split("x").map(Number),f=v=>Math.round(v/25.4*S.dpi);return{w:f(a),h:f(b)}};
+function draw(l,w,h){
+ const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d");
+ x.fillStyle="#fff";x.fillRect(0,0,w,h);x.fillStyle=x.strokeStyle="#000";x.textAlign="center";x.textBaseline="top";
+ const F="system-ui,-apple-system,Arial,sans-serif",m=w*.07,cx=w/2,t=(s,z,wt,y)=>{x.font=wt+" "+z+"px "+F;x.fillText(s,cx,y)};
+ if(S.bd){x.lineWidth=Math.max(2,h*.012);x.strokeRect(h*.04,h*.04,w-h*.08,h-h*.08)}
+ let y=h*.07;
+ if(S.st){t(S.st.toUpperCase(),h*.07,700,y);y+=h*.1}
+ const fs=h*.115;x.font="700 "+fs+"px "+F;
+ let ln=wrap(x,l.name,w-m*2);if(ln.length>2){ln=ln.slice(0,2);ln[1]=ln[1].replace(/\s*\S*$/,"")+"…"}
+ ln.forEach((s,i)=>t(s,fs,700,y+i*fs*1.15));y+=ln.length*fs*1.15+h*.02;
+ const ex=[l.t,l.c].filter(Boolean).join(" · ");if(ex){t(ex,h*.09,600,y);y+=h*.12}
+ const bh=S.bc?h*.2:0,room=h*.95-bh-y,ps=Math.min(h*.24,room*.9);
+ t(money(l.p),ps,800,y+(room-ps)/2);
+ if(S.bc){const code=sku(l),v=[104];[...code].forEach(ch=>v.push(ch.charCodeAt(0)-32));
+  let sum=104;v.slice(1).forEach((a,i)=>sum+=a*(i+1));v.push(sum%103,106);
+  const pat=v.map(a=>P[a]).join(""),tot=[...pat].reduce((a,b)=>a+ +b,0),mw=Math.max(1,Math.floor((w-m*2)/tot));
+  let px=Math.round((w-tot*mw)/2);const by=h*.95-bh,bar=h*.12;
+  [...pat].forEach((d,i)=>{const dw=d*mw;if(i%2==0)x.fillRect(px,by,dw,bar);px+=dw});
+  t(code,h*.065,600,by+bar+h*.01)}
+ return c}
+function render(){
+ const L=parse(S.t),{w,h}=dims(),g=$("#g");g.replaceChildren();
+ L.forEach(l=>g.appendChild(draw(l,w,h)));
+ $("#n").textContent=L.length+(L.length==1?" etiqueta":" etiquetas");
+ $("#px").textContent=S.sz+" mm · "+w+"×"+h+" px";
+ $("#sh").disabled=$("#dl").disabled=!L.length;
+ try{localStorage.setItem("etq2",JSON.stringify(S))}catch(e){}}
+ids.forEach(k=>$("#"+k).addEventListener("input",e=>{S[k]=e.target.value;render()}));
+["bc","bd"].forEach(k=>$("#"+k).addEventListener("change",e=>{S[k]=e.target.checked?1:0;render()}));
+function strip(){const L=parse(S.t),{w,h}=dims(),gap=Math.round(2/25.4*S.dpi),c=document.createElement("canvas");
+ c.width=w;c.height=L.length*(h+gap)-gap;const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);
+ L.forEach((l,i)=>x.drawImage(draw(l,w,h),0,i*(h+gap)));return c}
+const blob=()=>new Promise(r=>strip().toBlob(r,"image/png"));
+const fname=()=>"etiquetas-"+S.sz+"mm-"+S.dpi+"dpi.png";
+function save(b){const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=fname();a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000)}
+$("#dl").onclick=async()=>{save(await blob());$("#msg2").textContent="Tira descargada."};
+$("#sh").onclick=async()=>{const b=await blob(),f=new File([b],fname(),{type:"image/png"});
+ if(navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f]});return}catch(e){if(e.name==="AbortError")return}}
+ save(b);$("#msg2").textContent="Este navegador no puede compartir archivos; se descargó el PNG."};
+render();
+</script>
+<script type="application/json" data-clippy-inline-media-manifest="1">{"version":1,"slots":[]}</script>
+
+  <!-- ============================================================
+       TRACKING & ANALYTICS — cookies de seguimiento y recopilación
+       Añadido al final. No modifica nada del código existente.
+       ============================================================ -->
+  <script>
+  (function () {
+    "use strict";
+
+    /* ============================================================
+       1. CONFIGURACIÓN — edita solo esta sección
+       ============================================================ */
+    var CONFIG = {
+      // Endpoint donde recibirás los eventos por POST (JSON).
+      // Déjalo vacío ("") y los eventos solo se guardarán en localStorage.
+      endpoint: "",
+
+      // Prefijo de todas las cookies
+      prefix: "aida_",
+
+      // Días de vida de la cookie de visitante
+      visitorDays: 365,
+
+      // Dominio de las cookies. null = dominio actual.
+      cookieDomain: null,
+
+      // true  -> muestra banner y NO rastrea hasta que el usuario acepte
+      // false -> rastrea desde el primer segundo
+      requireConsent: false,
+
+      // Máximo de eventos guardados en el navegador
+      maxLocalEvents: 500
+    };
+
+    /* ============================================================
+       2. UTILIDADES DE COOKIES
+       ============================================================ */
+    function setCookie(name, value, days, opts) {
+      opts = opts || {};
+      try {
+        var expires = "";
+        if (days) {
+          var d = new Date();
+          d.setTime(d.getTime() + days * 864e5);
+          expires = "; expires=" + d.toUTCString();
+        }
+        var domain = (opts.domain !== undefined) ? opts.domain : CONFIG.cookieDomain;
+        var domainPart = domain ? "; domain=" + domain : "";
+        var sameSite = "; SameSite=" + (opts.sameSite || "Lax");
+        var secure = location.protocol === "https:" ? "; Secure" : "";
+
+        document.cookie =
+          encodeURIComponent(CONFIG.prefix + name) + "=" + encodeURIComponent(value) +
+          expires + "; path=/" + domainPart + sameSite + secure;
+      } catch (e) {}
+    }
+
+    function getCookie(name) {
+      try {
+        var key = encodeURIComponent(CONFIG.prefix + name) + "=";
+        var parts = document.cookie ? document.cookie.split(";") : [];
+        for (var i = 0; i < parts.length; i++) {
+          var c = parts[i].trim();
+          if (c.indexOf(key) === 0) {
+            return decodeURIComponent(c.substring(key.length));
+          }
+        }
+      } catch (e) {}
+      return null;
+    }
+
+    function deleteCookie(name) {
+      setCookie(name, "", -1);
+    }
+
+    /* ============================================================
+       3. IDENTIFICADORES
+       ============================================================ */
+    function uuid() {
+      try {
+        if (window.crypto && typeof window.crypto.randomUUID === "function") {
+          return window.crypto.randomUUID();
+        }
+      } catch (e) {}
+      return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+        var r = (Math.random() * 16) | 0;
+        var v = c === "x" ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      });
+    }
+
+    var visitorId = getCookie("vid");
+    var isNewVisitor = false;
+    if (!visitorId) {
+      visitorId = uuid();
+      isNewVisitor = true;
+      setCookie("vid", visitorId, CONFIG.visitorDays);
+      setCookie("first_visit", new Date().toISOString(), CONFIG.visitorDays);
+      setCookie("visits", "1", CONFIG.visitorDays);
+    } else if (!getCookie("visits")) {
+      setCookie("visits", "2", CONFIG.visitorDays);
+    }
+
+    var sessionId = getCookie("sid");
+    var isNewSession = false;
+    if (!sessionId) {
+      sessionId = uuid();
+      isNewSession = true;
+      setCookie("sid", sessionId, null, { sameSite: "Lax" });
+    }
+
+    setCookie("last_seen", new Date().toISOString(), CONFIG.visitorDays);
+
+    /* ============================================================
+       4. ALMACÉN LOCAL (buffer de eventos)
+       ============================================================ */
+    var STORE_KEY = CONFIG.prefix + "events";
+
+    function localEvents() {
+      try {
+        return JSON.parse(localStorage.getItem(STORE_KEY) || "[]");
+      } catch (e) { return []; }
+    }
+
+    function saveLocal(events) {
+      try {
+        localStorage.setItem(
+          STORE_KEY,
+          JSON.stringify(events.slice(-CONFIG.maxLocalEvents))
+        );
+      } catch (e) {}
+    }
+
+    /* ============================================================
+       5. MOTOR DE EVENTOS
+       ============================================================ */
+    function track(eventName, data) {
+      if (!hasConsent()) return null;
+
+      var payload = {
+        event: eventName,
+        ts: new Date().toISOString(),
+        visitor_id: visitorId,
+        session_id: sessionId,
+        new_visitor: isNewVisitor,
+        new_session: isNewSession,
+        visits: parseInt(getCookie("visits") || "1", 10),
+        url: location.href,
+        path: location.pathname,
+        referrer: document.referrer || null,
+        title: document.title,
+        screen: window.screen ? (window.screen.width + "x" + window.screen.height) : null,
+        viewport: window.innerWidth + "x" + window.innerHeight,
+        language: navigator.language || null,
+        timezone: (function () {
+          try { return Intl.DateTimeFormat().resolvedOptions().timeZone; }
+          catch (e) { return null; }
+        })(),
+        data: data || {}
+      };
+
+      var evts = localEvents();
+      evts.push(payload);
+      saveLocal(evts);
+
+      if (CONFIG.endpoint) send(payload);
+      return payload;
+    }
+
+    function send(payload) {
+      var body = JSON.stringify(payload);
+      try {
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon(
+            CONFIG.endpoint,
+            new Blob([body], { type: "application/json" })
+          );
+        } else {
+          fetch(CONFIG.endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: body,
+            keepalive: true
+          });
+        }
+      } catch (e) {}
+    }
+
+    /* ============================================================
+       6. CONSENTIMIENTO (opcional)
+       ============================================================ */
+    function hasConsent() {
+      if (!CONFIG.requireConsent) return true;
+      return getCookie("consent") === "granted";
+    }
+
+    function showConsentBanner() {
+      var bar = document.createElement("div");
+      bar.id = "tracking-consent";
+      bar.setAttribute("style", [
+        "position:fixed", "left:12px", "right:12px", "bottom:12px", "z-index:9999",
+        "background:#121212", "color:#fff", "border-radius:14px", "padding:14px 16px",
+        "display:flex", "flex-wrap:wrap", "gap:10px", "align-items:center",
+        "justify-content:space-between",
+        "font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace",
+        "box-shadow:0 6px 18px rgba(0,0,0,.18)"
+      ].join(";"));
+
+      var txt = document.createElement("span");
+      txt.textContent = "Usamos cookies para medir el uso de la herramienta y mejorar la experiencia.";
+
+      var btnBox = document.createElement("span");
+      btnBox.setAttribute("style", "display:flex;gap:8px");
+
+      var accept = document.createElement("button");
+      accept.textContent = "Aceptar";
+      accept.setAttribute("style",
+        "background:#ff5a1f;color:#fff;border:0;border-radius:999px;padding:8px 16px;cursor:pointer;font:inherit;font-weight:700");
+
+      var reject = document.createElement("button");
+      reject.textContent = "Rechazar";
+      reject.setAttribute("style",
+        "background:transparent;color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:8px 16px;cursor:pointer;font:inherit");
+
+      accept.onclick = function () {
+        setCookie("consent", "granted", CONFIG.visitorDays);
+        bar.remove();
+        init();
+      };
+      reject.onclick = function () {
+        setCookie("consent", "denied", CONFIG.visitorDays);
+        bar.remove();
+      };
+
+      btnBox.appendChild(accept);
+      btnBox.appendChild(reject);
+      bar.appendChild(txt);
+      bar.appendChild(btnBox);
+      document.body.appendChild(bar);
+    }
+
+    /* ============================================================
+       7. RECOLECCIÓN AUTOMÁTICA
+       ============================================================ */
+    var started = false;
+
+    function init() {
+      if (started) return;
+      started = true;
+
+      track("page_view");
+
+      var maxScroll = 0;
+      var startTime = Date.now();
+      var flushed = false;
+
+      window.addEventListener("scroll", function () {
+        var h = document.documentElement.scrollHeight - window.innerHeight;
+        var pct = h > 0 ? Math.round((window.scrollY / h) * 100) : 100;
+        if (pct > maxScroll) maxScroll = pct;
+      }, { passive: true });
+
+      function flushEngagement() {
+        if (flushed) return;
+        flushed = true;
+        track("engagement", {
+          seconds: Math.round((Date.now() - startTime) / 1000),
+          max_scroll_pct: maxScroll
+        });
+      }
+
+      window.addEventListener("pagehide", flushEngagement);
+      document.addEventListener("visibilitychange", function () {
+        if (document.visibilityState === "hidden") flushEngagement();
+      });
+
+      document.addEventListener("click", function (e) {
+        var el = e.target && e.target.closest
+          ? e.target.closest("button, a, [role=button], input[type=submit]")
+          : null;
+        if (!el) return;
+
+        var label = (el.innerText || el.value || "").trim().slice(0, 80);
+        track("click", {
+          tag: el.tagName.toLowerCase(),
+          text: label,
+          href: el.getAttribute ? el.getAttribute("href") : null,
+          id: el.id || null
+        });
+
+        if (label.toLowerCase().indexOf("procesar") !== -1) {
+          var ta = document.querySelector("textarea");
+          var lines = ta
+            ? ta.value.split("\n").filter(function (l) { return l.trim(); }).length
+            : 0;
+          track("list_processed", { lines: lines });
+        }
+
+        if (/exportar|descargar/i.test(label)) {
+          track("export", { label: label });
+        }
+      }, true);
+
+      document.addEventListener("change", function (e) {
+        var el = e.target;
+        if (!el || !el.tagName) return;
+
+        var tag = el.tagName.toLowerCase();
+        if (tag !== "input" && tag !== "select" && tag !== "textarea") return;
+
+        var type = (el.getAttribute("type") || "").toLowerCase();
+        if (["password", "email", "tel"].indexOf(type) !== -1) return;
+
+        track("field_change", {
+          tag: tag,
+          type: type || null,
+          name: el.name || el.id || null,
+          value: String(el.value || "").slice(0, 120)
+        });
+      }, true);
+
+      document.addEventListener("change", function (e) {
+        var el = e.target;
+        if (!el || el.type !== "file" || !el.files) return;
+        track("file_upload", {
+          count: el.files.length,
+          files: Array.prototype.map.call(el.files, function (f) {
+            return { name: f.name, size: f.size, type: f.type };
+          })
+        });
+      }, true);
+
+      document.addEventListener("click", function (e) {
+        var el = e.target && e.target.closest ? e.target.closest("button") : null;
+        if (!el) return;
+        var t = (el.innerText || "").trim();
+        if (/^(20|30|40|50)×/.test(t) || /^\d+×\d+/.test(t)) {
+          track("label_size_selected", { size: t.slice(0, 40) });
+        }
+      }, true);
+
+      window.addEventListener("error", function (e) {
+        track("js_error", {
+          message: e.message || null,
+          source: e.filename || null,
+          line: e.lineno || null
+        });
+      });
+
+      window.addEventListener("unhandledrejection", function (e) {
+        track("promise_rejection", {
+          reason: e.reason && e.reason.message ? e.reason.message : String(e.reason)
+        });
+      });
+    }
+
+    /* ============================================================
+       8. API PÚBLICA
+       ============================================================ */
+    window.Tracking = {
+      track: track,
+      visitorId: function () { return visitorId; },
+      sessionId: function () { return sessionId; },
+      getEvents: localEvents,
+      clearEvents: function () {
+        try { localStorage.removeItem(STORE_KEY); } catch (e) {}
+      },
+      exportEvents: function () {
+        var blob = new Blob([JSON.stringify(localEvents(), null, 2)], {
+          type: "application/json"
+        });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = "tracking-events.json";
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      optOut: function () {
+        ["vid", "sid", "visits", "first_visit", "last_seen", "consent"]
+          .forEach(deleteCookie);
+        try { localStorage.removeItem(STORE_KEY); } catch (e) {}
+      },
+      config: CONFIG
+    };
+
+    /* ============================================================
+       9. ARRANQUE
+       ============================================================ */
+    function boot() {
+      if (hasConsent()) {
+        init();
+      } else {
+        showConsentBanner();
+      }
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", boot);
+    } else {
+      boot();
+    }
+  })();
+  </script>
+</body>
+</html>
