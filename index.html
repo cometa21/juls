@@ -16,7 +16,6 @@
     body { margin: 0; font-family: 'Inter', system-ui, sans-serif; background-color: #FAF8F5; color: #27272a; }
     .serif { font-family: 'Instrument Serif', serif; }
     
-    /* Previsualización en pantalla (320x240px aprox para 203dpi) */
     @media screen {
       .etiqueta-item {
         width: 320px;
@@ -37,7 +36,6 @@
       }
     }
 
-    /* Impresión EXACTA 40x30mm */
     @media print {
       @page { size: 40mm 30mm; margin: 0; }
       body { margin: 0; padding: 0; background: white; }
@@ -66,10 +64,14 @@
         box-shadow: none !important;
         border-radius: 0 !important;
       }
+      /* Evita página en blanco al final */
+      #etiquetas-print .etiqueta-item:last-child {
+        page-break-after: auto;
+        break-after: auto;
+      }
       .no-print { display: none !important; }
     }
 
-    /* Elementos decorativos de la etiqueta */
     .etiqueta-header {
       width: 100%;
       display: flex;
@@ -115,7 +117,7 @@
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-full bg-zinc-900 text-white grid place-items-center font-bold text-[14px]">W→E</div>
           <div>
-            <h1 class="text-[15px] font-semibold leading-none tracking-tight">WhatsApp a Etiquetas 40x30mm</h1>
+            <h1 class="text-[15px] font-semibold leading-none tracking-tight">July Etiquetas 40x30mm</h1>
             <p class="text-[11px] text-zinc-500 mt-1 tracking-wide uppercase">OCR • Térmica 40×30mm exacta</p>
           </div>
         </div>
@@ -127,11 +129,11 @@
 
     <div class="max-w-[960px] mx-auto px-5 pt-6 pb-2 no-print">
       <div class="bg-white border border-zinc-200 rounded-[16px] p-4 flex flex-wrap gap-2 items-center text-[12px] leading-[1.2]">
-        <span class="px-2.5 py-1 rounded-full bg-zinc-900 text-white font-medium">Paso 1: Sube screenshot</span>
+        <span class="px-2.5 py-1 rounded-full bg-zinc-900 text-white font-medium">Paso 1: Sube imagen</span>
         <span class="text-zinc-400">→</span>
         <span class="px-2.5 py-1 rounded-full bg-zinc-100 border">Paso 2: Extrae</span>
         <span class="text-zinc-400">→</span>
-        <span class="px-2.5 py-1 rounded-full bg-zinc-100 border">Paso 3: Corrige cantidades</span>
+        <span class="px-2.5 py-1 rounded-full bg-zinc-100 border">Paso 3: Corrige o ajusta cantidades</span>
         <span class="text-zinc-400">→</span>
         <span class="px-2.5 py-1 rounded-full bg-zinc-100 border">Paso 4: Imprime (1 por página)</span>
       </div>
@@ -148,20 +150,20 @@
                 <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
             </div>
-            <p class="text-[14px] font-medium">Inserta la imagen aquí</p>
-            <p class="text-[12px] text-zinc-500 mt-1">Tipo de imagen PNG, JPG</p>
+            <p class="text-[14px] font-medium">Arrastra tu imagen aquí</p>
+            <p class="text-[12px] text-zinc-500 mt-1">Imagen PNG, JPG</p>
             <div class="mt-3 inline-flex px-3 py-1.5 rounded-full bg-zinc-900 text-white text-[12px] font-medium">Seleccionar imagen</div>
             <input id="file-input" type="file" accept="image/*" class="hidden" />
           </div>
 
           <div id="preview-container" class="mt-4 hidden">
-            <p class="text-[11px] uppercase tracking-widest text-zinc-500 mb-2">Avance</p>
+            <p class="text-[11px] uppercase tracking-widest text-zinc-500 mb-2">Preview</p>
             <div class="rounded-[12px] overflow-hidden border border-zinc-200 bg-zinc-50 max-h-[360px]">
               <img id="preview-img" src="" alt="screenshot preview" class="w-full h-auto object-contain" />
             </div>
             <div class="mt-3 flex gap-2">
               <button id="btn-extraer" class="flex-1 h-[44px] rounded-full bg-zinc-900 text-white text-[14px] font-medium disabled:opacity-50 hover:bg-black transition flex items-center justify-center gap-2">
-                ✦ Extraer información
+                ✦ Extraer info
               </button>
               <button id="btn-quitar" class="h-[44px] px-4 rounded-full border border-zinc-200 text-[13px] hover:bg-zinc-50">Quitar</button>
             </div>
@@ -197,7 +199,7 @@
           <div id="empty-state" class="p-10 text-center">
             <div class="mx-auto w-12 h-12 rounded-full bg-zinc-100 grid place-items-center mb-3 text-zinc-400">∅</div>
             <p class="text-[13px] text-zinc-600 font-medium">Aún no hay productos</p>
-            <p class="text-[12px] text-zinc-500 mt-1 max-w-[260px] mx-auto">Sube un screenshot y presiona Extraer info, o carga el ejemplo para probar.</p>
+            <p class="text-[12px] text-zinc-500 mt-1 max-w-[260px] mx-auto">Sube la imagen y presiona Extraer información, o carga el ejemplo para probar.</p>
           </div>
 
           <div id="tabla-container" class="overflow-x-auto no-scrollbar hidden">
@@ -214,7 +216,8 @@
             </table>
           </div>
 
-          <div class="p-3 bg-zinc-50 border-t border-zinc-100 flex flex-wrap gap-2 justify-end">
+          <div class="p-3 bg-zinc-50 border-t border-zinc-100 flex flex-wrap gap-2 justify-end items-center">
+            <p class="text-[10px] text-zinc-500 mr-auto italic">*Configura tu impresora a 40x30mm, escala 100%, márgenes 0.</p>
             <button id="btn-csv" disabled class="h-9 px-4 rounded-full border border-zinc-200 bg-white text-[12px] font-medium disabled:opacity-40 hover:bg-zinc-900 hover:text-white transition">Exportar CSV</button>
             <button id="btn-pdf" disabled class="h-9 px-4 rounded-full border border-zinc-200 bg-white text-[12px] font-medium disabled:opacity-40 hover:bg-zinc-900 hover:text-white transition">Generar PDF (40x30)</button>
             <button id="btn-imprimir" disabled class="h-9 px-4 rounded-full bg-zinc-900 text-white text-[12px] font-medium disabled:opacity-40 hover:bg-black transition">Imprimir etiquetas</button>
@@ -276,8 +279,7 @@
       let lineas = texto.split('\n').map(s => s.trim()).filter(s => s.length > 2);
       let items = [];
       
-      // ¡AQUÍ ESTÁ LA CORRECCIÓN! 
-      // Ahora la regex acepta comas en los miles y decimales.
+      // Regex corregida para aceptar comas en los miles y decimales
       let priceRegex = /\$?\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?|\d+(?:\.\d{2})?)/;
       let timeRegex = /\b\d{1,2}:\d{2}\b/;
       let idCounter = 0;
@@ -286,10 +288,15 @@
         if (timeRegex.test(linea)) continue;
 
         let cantidad = 1;
-        let qtyMatch = linea.match(/^\s*(\d+)\s+/);
+        // Busca cantidad al inicio, incluso si no hay espacio después
+        let qtyMatch = linea.match(/^\s*(\d+)\s*/);
         if (qtyMatch) {
-          cantidad = parseInt(qtyMatch[1], 10);
-          linea = linea.replace(/^\s*\d+\s+/, '');
+          let q = parseInt(qtyMatch[1], 10);
+          // Si el número es menor a 20, lo tomamos como cantidad
+          if (q > 0 && q < 20) {
+            cantidad = q;
+            linea = linea.replace(/^\s*\d+\s*/, ''); 
+          }
         }
 
         let priceMatch = linea.match(priceRegex);
@@ -299,7 +306,8 @@
         let precioStr = priceMatch[1].replace(/,/g, '');
         let precio = parseFloat(precioStr);
         
-        if (isNaN(precio) || precio < 10 || precio > 10000) continue;
+        // Subimos el umbral a 50 para evitar falsos positivos con cantidades
+        if (isNaN(precio) || precio < 50 || precio > 15000) continue;
 
         let descripcion = linea.replace(priceMatch[0], ' ').replace(/[-•|]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
         if (descripcion.length < 2) descripcion = "Prenda";
@@ -326,7 +334,14 @@
       return expandidos;
     }
 
+    function formatPrecio(precio) {
+      let num = parseFloat(precio);
+      if (isNaN(num)) return precio;
+      return num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+
     function generarHTMLDecoracion(item) {
+      let precioFormateado = formatPrecio(item.precio);
       return `
         <div class="etiqueta-header">
           <div class="etiqueta-header-line"></div>
@@ -344,7 +359,7 @@
         <div class="etiqueta-divider"></div>
 
         <div class="text-[32px] font-black text-zinc-900 leading-none tracking-tight my-1">
-          $${item.precio}
+          $${precioFormateado}
         </div>
 
         <div class="etiqueta-footer">
@@ -387,7 +402,7 @@
           <td class="px-2 py-2">
             <div class="flex items-center gap-1">
               <span class="text-zinc-400">$</span>
-              <input value="${item.precio}" data-id="${item.id}" data-campo="precio" class="w-full bg-white border border-zinc-200 rounded-[8px] px-2 py-1.5 input-edit">
+              <input value="${item.precio}" inputmode="decimal" data-id="${item.id}" data-campo="precio" class="w-full bg-white border border-zinc-200 rounded-[8px] px-2 py-1.5 input-edit">
             </div>
           </td>
           <td class="px-2 py-2">
@@ -412,11 +427,10 @@
           let item = state.items.find(i => i.id === id);
           if (item) {
             item[campo] = valor;
-            if (campo === 'cantidad' || campo === 'precio') {
-              let totalEtiquetas = state.items.reduce((acc, curr) => acc + (parseInt(curr.cantidad) || 1), 0);
-              DOM.contadorProductos.textContent = `${state.items.length} productos • ${totalEtiquetas} etiquetas en total`;
-              renderPreviewEtiquetas();
-            }
+            // Actualizamos contadores y previsualización sin importar el campo
+            let totalEtiquetas = state.items.reduce((acc, curr) => acc + (parseInt(curr.cantidad) || 1), 0);
+            DOM.contadorProductos.textContent = `${state.items.length} productos • ${totalEtiquetas} etiquetas en total`;
+            renderPreviewEtiquetas();
           }
         });
       });
@@ -514,6 +528,7 @@
 
     DOM.btnExtraer.addEventListener('click', async () => {
       if (!state.imagen) return;
+      let worker = null;
       try {
         DOM.btnExtraer.disabled = true;
         DOM.btnExtraer.innerHTML = '<span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Procesando...';
@@ -522,7 +537,7 @@
         DOM.progressBar.style.width = '10%';
         DOM.progressText.textContent = 'Cargando motor OCR...';
 
-        const worker = await Tesseract.createWorker("spa+eng", 1, {
+        worker = await Tesseract.createWorker("spa+eng", 1, {
           logger: (m) => {
             if (m.status === "recognizing text") {
               let p = Math.round(m.progress * 100);
@@ -536,7 +551,6 @@
         DOM.progressText.textContent = 'Reconociendo texto...';
 
         const { data: { text } } = await worker.recognize(state.imagen);
-        await worker.terminate();
 
         state.textoCrudo = text;
         DOM.progressBar.style.width = '100%';
@@ -560,6 +574,7 @@
         DOM.mensajeBox.textContent = error.message || 'Error en OCR. Intenta de nuevo.';
         DOM.mensajeBox.classList.remove('hidden');
       } finally {
+        if (worker) await worker.terminate();
         DOM.btnExtraer.disabled = false;
         DOM.btnExtraer.innerHTML = '✦ Extraer info';
       }
@@ -605,14 +620,61 @@
         expandidos.forEach((item, index) => {
           if (index > 0) doc.addPage([40, 30]);
 
-          doc.setFontSize(8);
-          doc.text(item.descripcion.toUpperCase(), 20, 8, { align: "center", maxWidth: 36 });
+          // --- Encabezado ---
+          doc.setDrawColor(24, 24, 27);
+          doc.setLineWidth(0.5);
+          doc.line(5, 4, 15, 4);
+          doc.line(25, 4, 35, 4);
+          
+          // Ícono de etiqueta (Tag) simulado
+          doc.setFillColor(24, 24, 27);
+          doc.rect(18, 3, 4, 2, 'F');
 
-          doc.setFontSize(22);
+          // --- Descripción (con salto de línea automático) ---
           doc.setFont("helvetica", "bold");
-          doc.text(`$${item.precio}`, 20, 22, { align: "center" });
+          doc.setFontSize(8);
+          doc.setTextColor(39, 39, 42);
+          
+          let desc = (item.descripcion || "PRENDA").toUpperCase();
+          if (desc.length > 25) doc.setFontSize(7);
+          if (desc.length > 35) doc.setFontSize(6);
+          
+          let splitDesc = doc.splitTextToSize(desc, 34);
+          let descY = 9;
+          splitDesc.forEach(line => {
+            let textWidth = doc.getTextWidth(line);
+            doc.text(line, 20 - (textWidth / 2), descY);
+            descY += 3;
+          });
+
+          // --- Separador (Línea punteada) ---
+          doc.setDrawColor(161, 161, 170);
+          doc.setLineWidth(0.2);
+          doc.setLineDashPattern([1, 1], 0);
+          doc.line(6, 16, 34, 16);
+          doc.setLineDashPattern([], 0);
+
+          // --- Precio ---
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(22);
+          doc.setTextColor(24, 24, 27);
+          
+          let precioFormateado = "$" + formatPrecio(item.precio);
+          let precioWidth = doc.getTextWidth(precioFormateado);
+          doc.text(precioFormateado, 20 - (precioWidth / 2), 24);
+
+          // --- Pie de página (Barras y Texto) ---
+          doc.setFillColor(24, 24, 27);
+          doc.rect(5, 26, 1, 2, 'F');
+          doc.rect(6.5, 26, 2, 1.5, 'F');
+          doc.rect(9, 26, 1, 2, 'F');
+          doc.rect(10.5, 26, 2.5, 1.8, 'F');
+          doc.rect(13.5, 26, 1, 1.5, 'F');
           
           doc.setFont("helvetica", "normal");
+          doc.setFontSize(6); // Aumentado de 5 a 6 para mejor legibilidad
+          doc.setTextColor(161, 161, 170);
+          doc.text("GRACIAS", 35, 28, { align: "right" });
         });
 
         doc.save(`etiquetas-40x30.pdf`);
