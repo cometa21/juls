@@ -115,7 +115,7 @@
         <div class="flex items-center gap-3">
           <div class="w-9 h-9 rounded-full bg-zinc-900 text-white grid place-items-center font-bold text-[14px]">W→E</div>
           <div>
-            <h1 class="text-[15px] font-semibold leading-none tracking-tight">Etiquetas 40x30mm</h1>
+            <h1 class="text-[15px] font-semibold leading-none tracking-tight">WhatsApp a Etiquetas 40x30mm</h1>
             <p class="text-[11px] text-zinc-500 mt-1 tracking-wide uppercase">OCR • Térmica 40×30mm exacta</p>
           </div>
         </div>
@@ -127,11 +127,11 @@
 
     <div class="max-w-[960px] mx-auto px-5 pt-6 pb-2 no-print">
       <div class="bg-white border border-zinc-200 rounded-[16px] p-4 flex flex-wrap gap-2 items-center text-[12px] leading-[1.2]">
-        <span class="px-2.5 py-1 rounded-full bg-zinc-900 text-white font-medium">Paso 1: Sube la imagen</span>
+        <span class="px-2.5 py-1 rounded-full bg-zinc-900 text-white font-medium">Paso 1: Sube screenshot</span>
         <span class="text-zinc-400">→</span>
         <span class="px-2.5 py-1 rounded-full bg-zinc-100 border">Paso 2: Extrae</span>
         <span class="text-zinc-400">→</span>
-        <span class="px-2.5 py-1 rounded-full bg-zinc-100 border">Paso 3: Modifica o ajusta cantidades</span>
+        <span class="px-2.5 py-1 rounded-full bg-zinc-100 border">Paso 3: Corrige cantidades</span>
         <span class="text-zinc-400">→</span>
         <span class="px-2.5 py-1 rounded-full bg-zinc-100 border">Paso 4: Imprime (1 por página)</span>
       </div>
@@ -148,8 +148,8 @@
                 <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
             </div>
-            <p class="text-[14px] font-medium">Inserte la imagen aquí</p>
-            <p class="text-[12px] text-zinc-500 mt-1">PNG, JPG de WhatsApp</p>
+            <p class="text-[14px] font-medium">Inserta la imagen aquí</p>
+            <p class="text-[12px] text-zinc-500 mt-1">Tipo de imagen PNG, JPG</p>
             <div class="mt-3 inline-flex px-3 py-1.5 rounded-full bg-zinc-900 text-white text-[12px] font-medium">Seleccionar imagen</div>
             <input id="file-input" type="file" accept="image/*" class="hidden" />
           </div>
@@ -275,7 +275,10 @@
     function parsearTexto(texto) {
       let lineas = texto.split('\n').map(s => s.trim()).filter(s => s.length > 2);
       let items = [];
-      let priceRegex = /\$?\s*(\d{2,5}(?:\.\d{2})?)/;
+      
+      // ¡AQUÍ ESTÁ LA CORRECCIÓN! 
+      // Ahora la regex acepta comas en los miles y decimales.
+      let priceRegex = /\$?\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?|\d+(?:\.\d{2})?)/;
       let timeRegex = /\b\d{1,2}:\d{2}\b/;
       let idCounter = 0;
 
@@ -291,7 +294,11 @@
 
         let priceMatch = linea.match(priceRegex);
         if (!priceMatch) continue;
-        let precio = parseFloat(priceMatch[1]);
+        
+        // Limpiamos las comas antes de convertir a número
+        let precioStr = priceMatch[1].replace(/,/g, '');
+        let precio = parseFloat(precioStr);
+        
         if (isNaN(precio) || precio < 10 || precio > 10000) continue;
 
         let descripcion = linea.replace(priceMatch[0], ' ').replace(/[-•|]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
@@ -319,10 +326,8 @@
       return expandidos;
     }
 
-    // Genera el HTML interno de una etiqueta decorada
     function generarHTMLDecoracion(item) {
       return `
-        <!-- Encabezado decorativo -->
         <div class="etiqueta-header">
           <div class="etiqueta-header-line"></div>
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#18181b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -332,20 +337,16 @@
           <div class="etiqueta-header-line"></div>
         </div>
 
-        <!-- Descripción -->
         <div class="text-[12px] leading-[1.2] font-bold text-zinc-800 uppercase text-center px-1 w-full mt-1">
           ${item.descripcion || "PRENDA"}
         </div>
 
-        <!-- Separador -->
         <div class="etiqueta-divider"></div>
 
-        <!-- Precio -->
         <div class="text-[32px] font-black text-zinc-900 leading-none tracking-tight my-1">
           $${item.precio}
         </div>
 
-        <!-- Pie de página decorativo -->
         <div class="etiqueta-footer">
           <div class="barcode-mini">
             <span style="width:1px;height:100%"></span>
@@ -604,11 +605,9 @@
         expandidos.forEach((item, index) => {
           if (index > 0) doc.addPage([40, 30]);
 
-          // Descripción
           doc.setFontSize(8);
           doc.text(item.descripcion.toUpperCase(), 20, 8, { align: "center", maxWidth: 36 });
 
-          // Precio
           doc.setFontSize(22);
           doc.setFont("helvetica", "bold");
           doc.text(`$${item.precio}`, 20, 22, { align: "center" });
